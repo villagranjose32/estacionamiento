@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Ingresar Vehículo - Sistema de Estacionamiento{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-sign-in-alt"></i> Ingresar Vehículo</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="ingresarForm">
+                    {{ csrf_token() if csrf_token }}
+                    <div class="mb-3">
+                        <label for="placa" class="form-label">
+                            <i class="fas fa-id-card"></i> Placa del Vehículo *
+                        </label>
+                        <input type="text" class="form-control" id="placa" name="placa" 
+                               placeholder="Ej: ABC123, XYZ789, DEF12A" required maxlength="8" 
+                               minlength="3"
+                               title="Ingrese la placa del vehículo (mínimo 3 caracteres)"
+                               style="text-transform: uppercase;">
+                        <div class="valid-feedback">
+                            ✓ Placa ingresada correctamente
+                        </div>
+                        <div class="invalid-feedback">
+                            La placa debe tener entre 3 y 8 caracteres
+                        </div>
+                        <div class="form-text">Formatos aceptados: ABC123, XYZ789, DEF12A, ABC-123, etc.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tipo_vehiculo" class="form-label">
+                            <i class="fas fa-car"></i> Tipo de Vehículo *
+                        </label>
+                        <select class="form-select" id="tipo_vehiculo" name="tipo_vehiculo" required>
+                            <option value="">Seleccione el tipo de vehículo</option>
+                            {% for tipo, tarifa in tarifas.items() %}
+                            <option value="{{ tipo }}">
+                                {{ tipo.capitalize() }} - {{ tarifa|currency }} por hora
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="propietario" class="form-label">
+                            <i class="fas fa-user"></i> Propietario (Opcional)
+                        </label>
+                        <input type="text" class="form-control" id="propietario" name="propietario" 
+                               placeholder="Nombre del propietario">
+                    </div>
+                    
+                    <!-- Información de Tarifas -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Tarifas Vigentes:</h6>
+                        <ul class="mb-0">
+                            {% for tipo, tarifa in tarifas.items() %}
+                            <li>{{ tipo.capitalize() }}: {{ tarifa|currency }} por hora</li>
+                            {% endfor %}
+                        </ul>
+                        <small class="text-muted">* Se cobra mínimo 1 hora</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-sign-in-alt"></i> Ingresar Vehículo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Convertir placa a mayúsculas y validar formato flexible
+document.getElementById('placa').addEventListener('input', function() {
+    // Convertir a mayúsculas y limpiar caracteres especiales excepto guiones
+    let valor = this.value.toUpperCase();
+    // Permitir letras, números y guiones
+    valor = valor.replace(/[^A-Z0-9\-]/g, '');
+    this.value = valor;
+    
+    // Validación más flexible
+    const longitudValida = valor.length >= 3 && valor.length <= 8;
+    const contieneLetrasYNumeros = /[A-Z]/.test(valor) && /[0-9]/.test(valor);
+    
+    if (valor.length === 0) {
+        this.classList.remove('is-invalid', 'is-valid');
+    } else if (longitudValida && contieneLetrasYNumeros) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else if (valor.length >= 3) {
+        // Si tiene al menos 3 caracteres pero no cumple formato, mostrar como válido temporalmente
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+    } else {
+        this.classList.add('is-invalid');
+        this.classList.remove('is-valid');
+    }
+});
+
+// Validación del formulario antes del envío (más permisiva)
+document.getElementById('ingresarForm').addEventListener('submit', function(e) {
+    const placa = document.getElementById('placa').value.trim();
+    const tipo = document.getElementById('tipo_vehiculo').value;
+    
+    // Validar placa con criterios más flexibles
+    if (placa.length < 3) {
+        e.preventDefault();
+        alert('La placa debe tener al menos 3 caracteres');
+        document.getElementById('placa').focus();
+        return false;
+    }
+    
+    if (placa.length > 8) {
+        e.preventDefault();
+        alert('La placa no puede tener más de 8 caracteres');
+        document.getElementById('placa').focus();
+        return false;
+    }
+    
+    // Verificar que tenga al menos una letra y un número
+    if (!/[A-Z]/.test(placa)) {
+        e.preventDefault();
+        alert('La placa debe contener al menos una letra');
+        document.getElementById('placa').focus();
+        return false;
+    }
+    
+    if (!/[0-9]/.test(placa)) {
+        e.preventDefault();
+        alert('La placa debe contener al menos un número');
+        document.getElementById('placa').focus();
+        return false;
+    }
+    
+    // Validar tipo de vehículo
+    if (!tipo) {
+        e.preventDefault();
+        alert('Por favor seleccione el tipo de vehículo');
+        document.getElementById('tipo_vehiculo').focus();
+        return false;
+    }
+    
+    // Confirmación
+    const confirmacion = confirm(
+        `¿Confirma el ingreso del vehículo?\\n\\n` +
+        `Placa: ${placa}\\n` +
+        `Tipo: ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`
+    );
+    
+    if (!confirmacion) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+{% endblock %}

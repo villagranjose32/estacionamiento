@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Abonos Mensuales - Sistema de Estacionamiento{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-calendar-check"></i> Abonos Mensuales</h1>
+            <a href="{{ url_for('nuevo_abono') }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nuevo Abono
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas de Abonos -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ estadisticas.total_abonos }}</h4>
+                        <p class="card-text">Total Abonos</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ estadisticas.abonos_vigentes }}</h4>
+                        <p class="card-text">Abonos Vigentes</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ estadisticas.abonos_vencidos }}</h4>
+                        <p class="card-text">Abonos Vencidos</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ estadisticas.ingresos_mensuales|currency }}</h4>
+                        <p class="card-text">Ingresos Abonos</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-dollar-sign fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Información del Abono Mensual -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Información del Abono Mensual</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Beneficios del Abono:</h6>
+                        <ul>
+                            <li><strong>10% de descuento</strong> en cada uso del estacionamiento</li>
+                            <li>Vigencia de <strong>30 días</strong> desde la fecha de compra</li>
+                            <li>Sin límite de usos durante la vigencia</li>
+                            <li>Renovación automática disponible</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-dollar-sign"></i> Precio del Abono Mensual:</h6>
+                            <h4 class="mb-0">{{ estadisticas.costo_abono|currency }}</h4>
+                            <small class="text-muted">Válido por 30 días</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('nuevo_abono') }}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Registrar Nuevo Abono
+                    </a>
+                    <a href="{{ url_for('consultar_abono') }}" class="btn btn-info">
+                        <i class="fas fa-search"></i> Consultar Abono
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Abonos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list"></i> Lista de Abonos Mensuales</h5>
+            </div>
+            <div class="card-body">
+                {% if abonos %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th><i class="fas fa-id-card"></i> Placa</th>
+                                <th><i class="fas fa-car"></i> Tipo</th>
+                                <th><i class="fas fa-user"></i> Propietario</th>
+                                <th><i class="fas fa-phone"></i> Teléfono</th>
+                                <th><i class="fas fa-calendar-plus"></i> Inicio</th>
+                                <th><i class="fas fa-calendar-times"></i> Vencimiento</th>
+                                <th><i class="fas fa-clock"></i> Días Restantes</th>
+                                <th><i class="fas fa-traffic-light"></i> Estado</th>
+                                <th><i class="fas fa-dollar-sign"></i> Monto</th>
+                                <th><i class="fas fa-cogs"></i> Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for placa, abono in abonos.items() %}
+                            <tr>
+                                <td><strong>{{ abono.placa }}</strong></td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-{{ 'motorcycle' if abono.tipo_vehiculo == 'moto' else ('car' if abono.tipo_vehiculo == 'auto' else 'truck') }}"></i>
+                                        {{ abono.tipo_vehiculo.capitalize() }}
+                                    </span>
+                                </td>
+                                <td>{{ abono.propietario }}</td>
+                                <td>
+                                    {% if abono.telefono %}
+                                        <a href="tel:{{ abono.telefono }}">{{ abono.telefono }}</a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ abono.fecha_inicio.strftime('%d/%m/%Y') if abono.fecha_inicio }}</td>
+                                <td>{{ abono.fecha_vencimiento.strftime('%d/%m/%Y') if abono.fecha_vencimiento }}</td>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if abono.dias_restantes() > 7 else ('bg-warning' if abono.dias_restantes() > 0 else 'bg-danger') }}">
+                                        {{ abono.dias_restantes() }} días
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if abono.esta_vigente() %}
+                                        <span class="badge bg-success">Vigente</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Vencido</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ abono.monto_pagado|currency }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        {% if abono.esta_vigente() %}
+                                            <form method="POST" action="{{ url_for('cancelar_abono', placa=abono.placa) }}" class="d-inline"
+                                                  onsubmit="return confirm('¿Está seguro de cancelar este abono?')">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Cancelar">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <form method="POST" action="{{ url_for('renovar_abono', placa=abono.placa) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-success btn-sm" title="Renovar">
+                                                    <i class="fas fa-redo"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        {% if abono.dias_restantes() <= 7 and abono.esta_vigente() %}
+                                            <form method="POST" action="{{ url_for('renovar_abono', placa=abono.placa) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-primary btn-sm" title="Renovar anticipado">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No hay abonos mensuales registrados</h4>
+                    <p class="text-muted">Comience registrando el primer abono mensual</p>
+                    <a href="{{ url_for('nuevo_abono') }}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Registrar Primer Abono
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Consultar Vehículo - Sistema de Estacionamiento{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-search"></i> Consultar Vehículo</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="consultarForm">
+                    {{ csrf_token() if csrf_token }}
+                    <div class="mb-3">
+                        <label for="placa" class="form-label">
+                            <i class="fas fa-id-card"></i> Placa del Vehículo *
+                        </label>
+                        <input type="text" class="form-control" id="placa" name="placa" 
+                               placeholder="Ingrese la placa a consultar" required maxlength="8"
+                               minlength="3"
+                               title="Ingrese la placa del vehículo (mínimo 3 caracteres)"
+                               style="text-transform: uppercase;">
+                        <div class="valid-feedback">
+                            ✓ Placa ingresada correctamente
+                        </div>
+                        <div class="invalid-feedback">
+                            La placa debe tener entre 3 y 8 caracteres
+                        </div>
+                        <div class="form-text">Formatos aceptados: ABC123, XYZ789, DEF12A, ABC-123, etc.</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-search"></i> Consultar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Información del vehículo -->
+        {% if vehiculo_info %}
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-car"></i> Información del Vehículo</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong><i class="fas fa-id-card"></i> Placa:</strong> 
+                           <span class="badge bg-primary">{{ vehiculo_info.vehiculo.placa }}</span></p>
+                        <p><strong><i class="fas fa-car"></i> Tipo:</strong> 
+                           {{ vehiculo_info.vehiculo.tipo_vehiculo.capitalize() }}</p>
+                        <p><strong><i class="fas fa-user"></i> Propietario:</strong> 
+                           {{ vehiculo_info.vehiculo.propietario or 'No especificado' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong><i class="fas fa-parking"></i> Espacio:</strong> 
+                           <span class="badge bg-info">{{ vehiculo_info.vehiculo.espacio_asignado }}</span></p>
+                        <p><strong><i class="fas fa-clock"></i> Hora de Entrada:</strong> 
+                           {{ vehiculo_info.vehiculo.hora_entrada.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+                        <p><strong><i class="fas fa-hourglass-half"></i> Tiempo Transcurrido:</strong> 
+                           {{ vehiculo_info.tiempo_horas }}h {{ vehiculo_info.tiempo_minutos }}m</p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning mt-3">
+                    <h6><i class="fas fa-dollar-sign"></i> Tarifa Actual a Pagar:</h6>
+                    <h4 class="mb-0 text-success">{{ vehiculo_info.tarifa_actual|currency }}</h4>
+                    <small class="text-muted">
+                        * Calculada al momento de la consulta. El monto final puede variar según la hora de salida.
+                    </small>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('egresar_vehiculo') }}" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt"></i> Procesar Egreso
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Convertir placa a mayúsculas y validar formato flexible
+document.getElementById('placa').addEventListener('input', function() {
+    // Convertir a mayúsculas y limpiar caracteres especiales excepto guiones
+    let valor = this.value.toUpperCase();
+    // Permitir letras, números y guiones
+    valor = valor.replace(/[^A-Z0-9\-]/g, '');
+    this.value = valor;
+    
+    // Validación más flexible
+    const longitudValida = valor.length >= 3 && valor.length <= 8;
+    
+    if (valor.length === 0) {
+        this.classList.remove('is-invalid', 'is-valid');
+    } else if (longitudValida) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+    } else {
+        this.classList.add('is-invalid');
+        this.classList.remove('is-valid');
+    }
+});
+
+// Validación del formulario antes del envío (más permisiva)
+document.getElementById('consultarForm').addEventListener('submit', function(e) {
+    const placa = document.getElementById('placa').value.trim();
+    
+    // Validar placa con criterios más flexibles
+    if (placa.length < 3 || placa.length > 8) {
+        e.preventDefault();
+        alert('La placa debe tener entre 3 y 8 caracteres');
+        document.getElementById('placa').focus();
+        return false;
+    }
+});
+</script>
+{% endblock %}

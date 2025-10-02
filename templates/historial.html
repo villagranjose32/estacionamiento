@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Historial - Sistema de Estacionamiento{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-history"></i> Historial de Vehículos</h4>
+            </div>
+            <div class="card-body">
+                {% if historial %}
+                <!-- Estadísticas del historial -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h5>{{ total_registros }}</h5>
+                                <p class="mb-0">Total de Registros</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h5>{{ total_recaudado|currency }}</h5>
+                                <p class="mb-0">Total Recaudado</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h5>{{ historial|length }}</h5>
+                                <p class="mb-0">Registros Mostrados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla del historial -->
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th><i class="fas fa-id-card"></i> Placa</th>
+                                <th><i class="fas fa-car"></i> Tipo</th>
+                                <th><i class="fas fa-sign-in-alt"></i> Entrada</th>
+                                <th><i class="fas fa-sign-out-alt"></i> Salida</th>
+                                <th><i class="fas fa-hourglass-half"></i> Permanencia</th>
+                                <th><i class="fas fa-dollar-sign"></i> Pagado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehiculo in historial %}
+                            <tr>
+                                <td><strong>{{ vehiculo.placa }}</strong></td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ vehiculo.tipo_vehiculo.capitalize() }}</span>
+                                </td>
+                                <td>
+                                    {% if vehiculo.hora_entrada %}
+                                        {{ vehiculo.hora_entrada.strftime('%d/%m/%Y') }}<br>
+                                        <small class="text-muted">{{ vehiculo.hora_entrada.strftime('%H:%M:%S') }}</small>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if vehiculo.hora_salida %}
+                                        {{ vehiculo.hora_salida.strftime('%d/%m/%Y') }}<br>
+                                        <small class="text-muted">{{ vehiculo.hora_salida.strftime('%H:%M:%S') }}</small>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if vehiculo.hora_entrada and vehiculo.hora_salida %}
+                                        {% set tiempo = vehiculo.calcular_tiempo_permanencia() %}
+                                        {% set horas = (tiempo.total_seconds() // 3600)|int %}
+                                        {% set minutos = ((tiempo.total_seconds() % 3600) // 60)|int %}
+                                        {{ horas }}h {{ minutos }}m
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ vehiculo.tarifa_pagada|currency }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if total_registros > historial|length %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    Mostrando los últimos {{ historial|length }} registros de {{ total_registros }} totales.
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No hay historial disponible</h4>
+                    <p class="text-muted">Aún no se han procesado egresos de vehículos</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Egresar Vehículo - Sistema de Estacionamiento{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-sign-out-alt"></i> Egresar Vehículo</h4>
+            </div>
+            <div class="card-body">
+                {% if vehiculos %}
+                <form method="POST" id="egresarForm">
+                    {{ csrf_token() if csrf_token }}
+                    <div class="mb-3">
+                        <label for="placa" class="form-label">
+                            <i class="fas fa-id-card"></i> Seleccionar Vehículo *
+                        </label>
+                        <select class="form-select" id="placa" name="placa" required>
+                            <option value="">Seleccione el vehículo a egresar</option>
+                            {% for vehiculo in vehiculos %}
+                            <option value="{{ vehiculo.placa }}" data-tipo="{{ vehiculo.tipo_vehiculo }}" 
+                                    data-espacio="{{ vehiculo.espacio_asignado }}" 
+                                    data-entrada="{{ vehiculo.hora_entrada.strftime('%H:%M:%S') if vehiculo.hora_entrada }}">
+                                {{ vehiculo.placa }} - {{ vehiculo.tipo_vehiculo.capitalize() }} 
+                                (Espacio {{ vehiculo.espacio_asignado }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Información del vehículo seleccionado -->
+                    <div id="info-vehiculo" class="alert alert-info d-none">
+                        <h6><i class="fas fa-info-circle"></i> Información del Vehículo:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Tipo:</strong> <span id="info-tipo"></span></p>
+                                <p><strong>Espacio:</strong> <span id="info-espacio"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Hora de Entrada:</strong> <span id="info-entrada"></span></p>
+                                <p><strong>Tiempo Estimado:</strong> <span id="info-tiempo"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-sign-out-alt"></i> Egresar Vehículo
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-car fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No hay vehículos en el estacionamiento</h4>
+                    <p class="text-muted">No hay vehículos para egresar en este momento</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('placa').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const infoDiv = document.getElementById('info-vehiculo');
+    
+    if (selectedOption.value) {
+        document.getElementById('info-tipo').textContent = selectedOption.dataset.tipo;
+        document.getElementById('info-espacio').textContent = selectedOption.dataset.espacio;
+        document.getElementById('info-entrada').textContent = selectedOption.dataset.entrada;
+        
+        // Calcular tiempo transcurrido
+        const entrada = new Date('1970-01-01T' + selectedOption.dataset.entrada + 'Z');
+        const ahora = new Date();
+        const diff = ahora - entrada;
+        const horas = Math.floor(diff / (1000 * 60 * 60));
+        const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        document.getElementById('info-tiempo').textContent = horas + 'h ' + minutos + 'm';
+        
+        infoDiv.classList.remove('d-none');
+    } else {
+        infoDiv.classList.add('d-none');
+    }
+});
+
+// Validación del formulario antes del envío
+document.getElementById('egresarForm').addEventListener('submit', function(e) {
+    const placa = document.getElementById('placa').value;
+    
+    if (!placa) {
+        e.preventDefault();
+        alert('Por favor seleccione un vehículo para egresar');
+        document.getElementById('placa').focus();
+        return false;
+    }
+    
+    // Obtener información del vehículo seleccionado
+    const selectedOption = document.querySelector(`option[value="${placa}"]`);
+    const tipo = selectedOption.dataset.tipo;
+    const espacio = selectedOption.dataset.espacio;
+    
+    // Confirmación
+    const confirmacion = confirm(
+        `¿Confirma el egreso del vehículo?\\n\\n` +
+        `Placa: ${placa}\\n` +
+        `Tipo: ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}\\n` +
+        `Espacio: ${espacio}`
+    );
+    
+    if (!confirmacion) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Consultar Abono - Sistema de Estacionamiento{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-search"></i> Consultar Abono Mensual</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="placa" class="form-label">
+                            <i class="fas fa-id-card"></i> Placa del Vehículo *
+                        </label>
+                        <input type="text" class="form-control" id="placa" name="placa" 
+                               placeholder="Ingrese la placa a consultar" required
+                               style="text-transform: uppercase;">
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('gestionar_abonos') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-search"></i> Consultar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Información del abono -->
+        {% if abono_info %}
+        <div class="card mt-4">
+            <div class="card-header {{ 'bg-success text-white' if abono_info.vigente else 'bg-warning' }}">
+                <h5><i class="fas fa-calendar-check"></i> Información del Abono Mensual</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-info-circle"></i> Datos del Abono:</h6>
+                        <p><strong><i class="fas fa-id-card"></i> Placa:</strong> 
+                           <span class="badge bg-primary">{{ abono_info.abono.placa }}</span></p>
+                        <p><strong><i class="fas fa-car"></i> Tipo de Vehículo:</strong> 
+                           <span class="badge bg-secondary">
+                               <i class="fas fa-{{ 'motorcycle' if abono_info.abono.tipo_vehiculo == 'moto' else ('car' if abono_info.abono.tipo_vehiculo == 'auto' else 'truck') }}"></i>
+                               {{ abono_info.abono.tipo_vehiculo.capitalize() }}
+                           </span></p>
+                        <p><strong><i class="fas fa-user"></i> Propietario:</strong> 
+                           {{ abono_info.abono.propietario }}</p>
+                        {% if abono_info.abono.telefono %}
+                        <p><strong><i class="fas fa-phone"></i> Teléfono:</strong> 
+                           <a href="tel:{{ abono_info.abono.telefono }}">{{ abono_info.abono.telefono }}</a></p>
+                        {% endif %}
+                        {% if abono_info.abono.email %}
+                        <p><strong><i class="fas fa-envelope"></i> Email:</strong> 
+                           <a href="mailto:{{ abono_info.abono.email }}">{{ abono_info.abono.email }}</a></p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-calendar"></i> Fechas y Vigencia:</h6>
+                        <p><strong><i class="fas fa-calendar-plus"></i> Fecha de Inicio:</strong> 
+                           {{ abono_info.abono.fecha_inicio.strftime('%d/%m/%Y') if abono_info.abono.fecha_inicio }}</p>
+                        <p><strong><i class="fas fa-calendar-times"></i> Fecha de Vencimiento:</strong> 
+                           {{ abono_info.abono.fecha_vencimiento.strftime('%d/%m/%Y') if abono_info.abono.fecha_vencimiento }}</p>
+                        <p><strong><i class="fas fa-clock"></i> Días Restantes:</strong> 
+                           <span class="badge {{ 'bg-success' if abono_info.dias_restantes > 7 else ('bg-warning' if abono_info.dias_restantes > 0 else 'bg-danger') }}">
+                               {{ abono_info.dias_restantes }} días
+                           </span></p>
+                        <p><strong><i class="fas fa-dollar-sign"></i> Monto Pagado:</strong> 
+                           {{ abono_info.abono.monto_pagado|currency }}</p>
+                    </div>
+                </div>
+                
+                <!-- Estado del Abono -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        {% if abono_info.vigente %}
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle"></i> Abono Vigente</h6>
+                            <p class="mb-0">
+                                Este abono está activo y otorga un <strong>{{ abono_info.abono.descuento_aplicado }}% de descuento</strong> 
+                                en cada uso del estacionamiento.
+                            </p>
+                            {% if abono_info.dias_restantes <= 7 %}
+                            <hr>
+                            <p class="mb-0 text-warning">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                <strong>Atención:</strong> El abono vence en {{ abono_info.dias_restantes }} días. 
+                                Considere renovarlo pronto.
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-times-circle"></i> Abono Vencido</h6>
+                            <p class="mb-0">
+                                Este abono ha vencido y ya no otorga descuentos. 
+                                Puede renovarlo para continuar disfrutando de los beneficios.
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Acciones Disponibles -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            {% if abono_info.puede_renovar %}
+                            <form method="POST" action="{{ url_for('renovar_abono', placa=abono_info.abono.placa) }}" class="d-inline">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-redo"></i> 
+                                    {% if abono_info.vigente %}Renovar Anticipado{% else %}Renovar Abono{% endif %}
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            {% if abono_info.vigente %}
+                            <form method="POST" action="{{ url_for('cancelar_abono', placa=abono_info.abono.placa) }}" class="d-inline"
+                                  onsubmit="return confirm('¿Está seguro de cancelar este abono? Esta acción no se puede deshacer.')">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Cancelar Abono
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Convertir placa a mayúsculas automáticamente
+document.getElementById('placa').addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+});
+</script>
+{% endblock %}

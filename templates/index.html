@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sistema de Estacionamiento{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt"></i> Dashboard del Estacionamiento
+        </h1>
+    </div>
+</div>
+
+<!-- Estadísticas Principales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ estado.capacidad_total }}</h4>
+                        <p class="card-text">Capacidad Total</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-parking fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="espacios-disponibles">{{ estado.disponibles }}</h4>
+                        <p class="card-text">Espacios Disponibles</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="espacios-ocupados">{{ estado.ocupados }}</h4>
+                        <p class="card-text">Espacios Ocupados</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-car fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="porcentaje-ocupacion">{{ "%.1f"|format(estado.porcentaje_ocupacion) }}%</h4>
+                        <p class="card-text">Ocupación</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-pie fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Barra de Progreso de Ocupación -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Nivel de Ocupación</h5>
+            </div>
+            <div class="card-body">
+                <div class="progress" style="height: 30px;">
+                    <div class="progress-bar" role="progressbar" 
+                         id="barra-ocupacion"
+                         data-porcentaje="{{ estado.porcentaje_ocupacion }}">
+                        {{ "%.1f"|format(estado.porcentaje_ocupacion) }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tarifas Actuales y Abonos -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-dollar-sign"></i> Tarifas por Hora</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for tipo, tarifa in estado.tarifas.items() %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-{{ 'motorcycle' if tipo == 'moto' else ('car' if tipo == 'auto' else 'truck') }}"></i>
+                            {{ tipo.capitalize() }}
+                        </span>
+                        <span class="badge bg-primary rounded-pill">{{ tarifa|currency }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-2 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        Abonos mensuales: <strong>10% descuento</strong>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Información de Abonos -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-calendar-check"></i> Abonos Mensuales</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-success">{{ estado.estadisticas_abonos.abonos_vigentes }}</h4>
+                        <small class="text-muted">Vigentes</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-primary">{{ estado.estadisticas_abonos.costo_abono|currency }}</h4>
+                        <small class="text-muted">Precio mensual</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <p class="mb-2"><strong>Beneficios del Abono:</strong></p>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success"></i> 10% de descuento</li>
+                        <li><i class="fas fa-check text-success"></i> Válido por 30 días</li>
+                        <li><i class="fas fa-check text-success"></i> Sin límite de usos</li>
+                    </ul>
+                </div>
+                <div class="d-grid">
+                    <a href="{{ url_for('nuevo_abono') }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> Nuevo Abono
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('ingresar_vehiculo') }}" class="btn btn-success">
+                        <i class="fas fa-sign-in-alt"></i> Ingresar Vehículo
+                    </a>
+                    <a href="{{ url_for('egresar_vehiculo') }}" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt"></i> Egresar Vehículo
+                    </a>
+                    <a href="{{ url_for('consultar_vehiculo') }}" class="btn btn-info">
+                        <i class="fas fa-search"></i> Consultar Vehículo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vehículos Actuales -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-list"></i> Vehículos Actuales</h5>
+                <button class="btn btn-sm btn-outline-primary" id="btn-actualizar">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+            </div>
+            <div class="card-body">
+                {% if estado.vehiculos_actuales %}
+                <div class="table-responsive">
+                    <table class="table table-striped" id="tabla-vehiculos">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-id-card"></i> Placa</th>
+                                <th><i class="fas fa-car"></i> Tipo</th>
+                                <th><i class="fas fa-user"></i> Propietario</th>
+                                <th><i class="fas fa-parking"></i> Espacio</th>
+                                <th><i class="fas fa-clock"></i> Entrada</th>
+                                <th><i class="fas fa-hourglass-half"></i> Tiempo</th>
+                                <th><i class="fas fa-calendar-check"></i> Abono</th>
+                                <th><i class="fas fa-dollar-sign"></i> Tarifa Actual</th>
+                                <th><i class="fas fa-cogs"></i> Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehiculo in estado.vehiculos_actuales %}
+                            {% set tiempo = vehiculo.calcular_tiempo_permanencia() %}
+                            {% set horas = (tiempo.total_seconds() // 3600)|int %}
+                            {% set minutos = ((tiempo.total_seconds() % 3600) // 60)|int %}
+                            <tr>
+                                <td><strong>{{ vehiculo.placa }}</strong></td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ vehiculo.tipo_vehiculo.capitalize() }}</span>
+                                </td>
+                                <td>{{ vehiculo.propietario or 'No especificado' }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ vehiculo.espacio_asignado }}</span>
+                                </td>
+                                <td>{{ vehiculo.hora_entrada.strftime('%H:%M:%S') if vehiculo.hora_entrada }}</td>
+                                <td>{{ horas }}h {{ minutos }}m</td>
+                                <td>
+                                    <span id="abono-{{ loop.index }}" class="badge">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span id="tarifa-{{ loop.index }}" class="badge bg-success">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </span>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm btn-egresar" 
+                                            data-placa="{{ vehiculo.placa }}" 
+                                            data-tipo="{{ vehiculo.tipo_vehiculo }}" 
+                                            data-espacio="{{ vehiculo.espacio_asignado }}"
+                                            title="Egresar vehículo">
+                                        <i class="fas fa-sign-out-alt"></i> Egresar
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-car fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No hay vehículos en el estacionamiento</h4>
+                    <p class="text-muted">Todos los espacios están disponibles</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Inicializar barra de progreso al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const barra = document.getElementById('barra-ocupacion');
+    const porcentaje = barra.dataset.porcentaje;
+    barra.style.width = porcentaje + '%';
+});
+
+// Actualización automática cada 30 segundos
+setInterval(function() {
+    actualizarDashboard();
+}, 30000);
+
+// Función para actualizar el dashboard
+function actualizarDashboard() {
+    fetch('/api/estado')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('espacios-disponibles').textContent = data.disponibles;
+            document.getElementById('espacios-ocupados').textContent = data.ocupados;
+            document.getElementById('porcentaje-ocupacion').textContent = data.porcentaje_ocupacion.toFixed(1) + '%';
+            
+            // Actualizar barra de progreso
+            const barra = document.getElementById('barra-ocupacion');
+            barra.style.width = data.porcentaje_ocupacion + '%';
+            barra.textContent = data.porcentaje_ocupacion.toFixed(1) + '%';
+        });
+}
+
+// Botón de actualizar manual
+document.getElementById('btn-actualizar').addEventListener('click', function() {
+    location.reload();
+});
+
+// Event listener para botones de egreso
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.btn-egresar')) {
+        const btn = e.target.closest('.btn-egresar');
+        const placa = btn.dataset.placa;
+        const tipo = btn.dataset.tipo;
+        const espacio = btn.dataset.espacio;
+        procesarEgreso(placa, tipo, espacio);
+    }
+});
+
+// Función para procesar egreso individual
+async function procesarEgreso(placa, tipoVehiculo, espacio) {
+    // Obtener información actual del vehículo para mostrar en la confirmación
+    try {
+        // Mostrar confirmación con información del vehículo
+        const confirmacion = confirm(
+            `¿Confirma el egreso del vehículo?\\n\\n` +
+            `Placa: ${placa}\\n` +
+            `Tipo: ${tipoVehiculo.charAt(0).toUpperCase() + tipoVehiculo.slice(1)}\\n` +
+            `Espacio: ${espacio}\\n\\n` +
+            `Nota: Se calculará la tarifa según el tiempo de permanencia.`
+        );
+        
+        if (!confirmacion) {
+            return;
+        }
+        
+        // Deshabilitar el botón mientras se procesa
+        const botones = document.querySelectorAll(`button[data-placa="${placa}"]`);
+        botones.forEach(btn => {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        });
+        
+        // Enviar petición de egreso
+        const response = await fetch('/egresar-rapido', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ placa: placa })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Mostrar resumen del egreso
+            alert(
+                `✅ Egreso exitoso\\n\\n` +
+                `Placa: ${data.data.placa}\\n` +
+                `Tiempo: ${data.data.tiempo_permanencia}\\n` +
+                `Tarifa: ${data.data.tarifa_formateada}\\n` +
+                `Propietario: ${data.data.propietario}`
+            );
+            
+            // Recargar la página para actualizar la lista
+            location.reload();
+            
+        } else {
+            alert('❌ Error: ' + data.message);
+            
+            // Rehabilitar el botón en caso de error
+            botones.forEach(btn => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Egresar';
+            });
+        }
+        
+    } catch (error) {
+        alert('❌ Error de conexión: ' + error.message);
+        
+        // Rehabilitar el botón en caso de error
+        const botones = document.querySelectorAll(`button[data-placa="${placa}"]`);
+        botones.forEach(btn => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Egresar';
+        });
+    }
+}
+
+// Agregar estilos CSS para mejorar la apariencia
+const style = document.createElement('style');
+style.textContent = `
+    .btn-danger:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .table th:last-child,
+    .table td:last-child {
+        text-align: center;
+        width: 120px;
+    }
+    
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .btn-sm {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

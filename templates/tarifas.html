@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Gestionar Tarifas - Sistema de Estacionamiento{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-dollar-sign"></i> Gestionar Tarifas por Hora</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> Información Importante:</h6>
+                    <ul class="mb-0">
+                        <li>Las tarifas se aplican por hora de permanencia</li>
+                        <li>Se cobra mínimo 1 hora, redondeando hacia arriba</li>
+                        <li>Los cambios se aplican inmediatamente</li>
+                        <li>Haga clic en "Editar" para modificar cada tarifa individualmente</li>
+                    </ul>
+                </div>
+
+                <!-- Tabla de tarifas con edición inline -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th><i class="fas fa-car"></i> Tipo de Vehículo</th>
+                                <th><i class="fas fa-money-bill-wave"></i> Tarifa por Hora</th>
+                                <th><i class="fas fa-cogs"></i> Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tipo, tarifa in tarifas.items() %}
+                            <tr id="row-{{ tipo }}">
+                                <td>
+                                    <i class="fas fa-{{ 'motorcycle' if tipo == 'moto' else ('car' if tipo == 'auto' else 'truck') }} text-primary me-2"></i>
+                                    <strong>{{ tipo.capitalize() }}</strong>
+                                </td>
+                                <td>
+                                    <!-- Modo visualización -->
+                                    <div class="tarifa-display" id="display-{{ tipo }}">
+                                        <h5 class="text-success mb-0">{{ tarifa|currency }}</h5>
+                                        <small class="text-muted">por hora</small>
+                                    </div>
+                                    <!-- Modo edición -->
+                                    <div class="tarifa-edit d-none" id="edit-{{ tipo }}">
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="input-{{ tipo }}" 
+                                                   value="{{ tarifa }}" min="500" max="50000" step="100">
+                                            <span class="input-group-text">pesos</span>
+                                        </div>
+                                        <div class="form-text">Entre $500 y $50.000</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <!-- Botones modo visualización -->
+                                    <div class="btn-display" id="btn-display-{{ tipo }}">
+                                        <button type="button" class="btn btn-outline-primary btn-sm btn-editar" 
+                                                data-tipo="{{ tipo }}">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </button>
+                                    </div>
+                                    <!-- Botones modo edición -->
+                                    <div class="btn-edit d-none" id="btn-edit-{{ tipo }}">
+                                        <button type="button" class="btn btn-success btn-sm me-1 btn-guardar" 
+                                                data-tipo="{{ tipo }}">
+                                            <i class="fas fa-save"></i> Guardar
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm btn-cancelar" 
+                                                data-tipo="{{ tipo }}" 
+                                                data-tarifa-original="{{ tarifa }}">
+                                            <i class="fas fa-times"></i> Cancelar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Formulario tradicional como respaldo -->
+                <div class="mt-4">
+                    <h6><i class="fas fa-tools"></i> Actualización Masiva (Opcional)</h6>
+                    <form method="POST" id="formularioMasivo">
+                        {{ csrf_token() if csrf_token }}
+                        <div class="row">
+                            {% for tipo, tarifa in tarifas.items() %}
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ tipo.capitalize() }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" name="tarifa_{{ tipo }}" 
+                                           value="{{ tarifa }}" min="500" max="50000" step="100">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> Actualizar Todas las Tarifas
+                        </button>
+                    </form>
+                </div>
+                    
+                
+                <!-- Simulador de tarifas -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-calculator"></i> Simulador de Tarifas</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Tipo de Vehículo:</label>
+                                <select id="sim-tipo" class="form-select">
+                                    {% for tipo in tarifas.keys() %}
+                                    <option value="{{ tipo }}">{{ tipo.capitalize() }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Horas de Permanencia:</label>
+                                <input type="number" id="sim-horas" class="form-control" value="1" min="0.1" step="0.1">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Costo Calculado:</label>
+                                <div class="form-control bg-light">
+                                    <span id="sim-resultado" class="text-success fw-bold">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mt-2">
+                            * El sistema cobra mínimo 1 hora y redondea hacia arriba
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales para mantener las tarifas
+const tarifasOriginales = {};
+
+// Inicializar tarifas desde el DOM
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener tarifas de los inputs
+    document.querySelectorAll('[id^="input-"]').forEach(input => {
+        const tipo = input.id.replace('input-', '');
+        tarifasOriginales[tipo] = parseInt(input.value);
+    });
+});
+
+// Función para activar modo de edición
+function editarTarifa(tipo) {
+    // Ocultar elementos de visualización
+    document.getElementById(`display-${tipo}`).classList.add('d-none');
+    document.getElementById(`btn-display-${tipo}`).classList.add('d-none');
+    
+    // Mostrar elementos de edición
+    document.getElementById(`edit-${tipo}`).classList.remove('d-none');
+    document.getElementById(`btn-edit-${tipo}`).classList.remove('d-none');
+    
+    // Enfocar en el input
+    document.getElementById(`input-${tipo}`).focus();
+    document.getElementById(`input-${tipo}`).select();
+}
+
+// Función para cancelar edición
+function cancelarEdicion(tipo, valorOriginal) {
+    // Restaurar valor original
+    document.getElementById(`input-${tipo}`).value = valorOriginal;
+    
+    // Mostrar elementos de visualización
+    document.getElementById(`display-${tipo}`).classList.remove('d-none');
+    document.getElementById(`btn-display-${tipo}`).classList.remove('d-none');
+    
+    // Ocultar elementos de edición
+    document.getElementById(`edit-${tipo}`).classList.add('d-none');
+    document.getElementById(`btn-edit-${tipo}`).classList.add('d-none');
+}
+
+// Función para guardar tarifa
+async function guardarTarifa(tipo) {
+    const input = document.getElementById(`input-${tipo}`);
+    const nuevaTarifa = parseInt(input.value);
+    
+    // Validaciones del lado del cliente
+    if (!nuevaTarifa || nuevaTarifa < 500 || nuevaTarifa > 50000) {
+        alert('La tarifa debe ser un número entre $500 y $50.000');
+        input.focus();
+        return;
+    }
+    
+    try {
+        // Mostrar indicador de carga
+        const btnGuardar = document.querySelector(`#btn-edit-${tipo} .btn-success`);
+        const originalText = btnGuardar.innerHTML;
+        btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        btnGuardar.disabled = true;
+        
+        // Enviar petición al servidor
+        const response = await fetch('/tarifas/modificar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `tipo_vehiculo=${tipo}&nueva_tarifa=${nuevaTarifa}`
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Actualizar la visualización
+            const displayElement = document.querySelector(`#display-${tipo} h5`);
+            displayElement.textContent = '$' + nuevaTarifa.toLocaleString('es-CO');
+            
+            // Actualizar tarifa en memoria
+            tarifasOriginales[tipo] = nuevaTarifa;
+            
+            // Volver a modo visualización
+            cancelarEdicion(tipo, nuevaTarifa);
+            
+            // Actualizar simulador
+            calcularSimulacion();
+            
+            // Mostrar mensaje de éxito
+            mostrarMensaje(data.message, 'success');
+            
+        } else {
+            alert('Error: ' + data.message);
+        }
+        
+    } catch (error) {
+        alert('Error de conexión: ' + error.message);
+    } finally {
+        // Restaurar botón
+        const btnGuardar = document.querySelector(`#btn-edit-${tipo} .btn-success`);
+        btnGuardar.innerHTML = originalText;
+        btnGuardar.disabled = false;
+    }
+}
+
+// Función para mostrar mensajes
+function mostrarMensaje(mensaje, tipo) {
+    const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = tipo === 'success' ? 'check-circle' : 'exclamation-circle';
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${icon}"></i> ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insertar al inicio del contenido
+    const cardBody = document.querySelector('.card-body');
+    cardBody.insertBefore(alertDiv, cardBody.firstChild);
+    
+    // Auto-eliminar después de 5 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Simulador de tarifas
+function calcularSimulacion() {
+    const tipo = document.getElementById('sim-tipo').value;
+    const horas = parseFloat(document.getElementById('sim-horas').value) || 0;
+    
+    // Obtener tarifa actual (puede haber cambiado)
+    const tarifaPorHora = tarifasOriginales[tipo] || 0;
+    
+    // Calcular (redondear hacia arriba como en el sistema real)
+    const horasACobrar = Math.max(1, Math.ceil(horas));
+    const total = horasACobrar * tarifaPorHora;
+    
+    document.getElementById('sim-resultado').textContent = 
+        '$' + total.toLocaleString('es-CO') + ' (' + horasACobrar + ' horas)';
+}
+
+// Manejar tecla Enter para guardar
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        // Buscar si hay algún input de edición activo
+        const activeInput = document.querySelector('.tarifa-edit:not(.d-none) input');
+        if (activeInput) {
+            e.preventDefault();
+            const tipo = activeInput.id.replace('input-', '');
+            guardarTarifa(tipo);
+        }
+    }
+    
+    if (e.key === 'Escape') {
+        // Cancelar edición activa
+        const activeEdit = document.querySelector('.tarifa-edit:not(.d-none)');
+        if (activeEdit) {
+            const tipo = activeEdit.id.replace('edit-', '');
+            const valorOriginal = tarifasOriginales[tipo];
+            cancelarEdicion(tipo, valorOriginal);
+        }
+    }
+});
+
+// Event listeners para el simulador
+document.getElementById('sim-tipo').addEventListener('change', calcularSimulacion);
+document.getElementById('sim-horas').addEventListener('input', calcularSimulacion);
+
+// Calcular simulación inicial
+calcularSimulacion();
+
+// Event delegation para manejar botones dinámicos
+document.addEventListener('DOMContentLoaded', function() {
+    // Botones de editar
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tipo = this.getAttribute('data-tipo');
+            editarTarifa(tipo);
+        });
+    });
+    
+    // Botones de guardar
+    document.querySelectorAll('.btn-guardar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tipo = this.getAttribute('data-tipo');
+            guardarTarifa(tipo);
+        });
+    });
+    
+    // Botones de cancelar
+    document.querySelectorAll('.btn-cancelar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tipo = this.getAttribute('data-tipo');
+            const tarifaOriginal = this.getAttribute('data-tarifa-original');
+            cancelarEdicion(tipo, parseInt(tarifaOriginal));
+        });
+    });
+});
+
+// Mensaje de ayuda para teclado
+console.log('💡 Atajos de teclado disponibles:');
+console.log('   Enter: Guardar tarifa en edición');
+console.log('   Escape: Cancelar edición');
+</script>
+{% endblock %}
